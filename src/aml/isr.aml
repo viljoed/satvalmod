@@ -1,0 +1,153 @@
+/*--------------------------------------------------------------------------
+/*                         Geological Survey of Canada.
+/*--------------------------------------------------------------------------
+/*   Program: isr.aml
+/*   Purpose: Performs Interactive Shaded Relief on a grid
+/*--------------------------------------------------------------------------
+/*     Usage: ISR <in_grid> {z_factor}
+/* Arguments: in_grid zfactor
+/*    Locals:
+/*   Globals: 
+/*--------------------------------------------------------------------------
+/*     Calls: isr.menu 
+/* Called by:
+/*--------------------------------------------------------------------------
+/*     Notes: 
+/*--------------------------------------------------------------------------
+/*   History: David Viljoen - 20/10/94 - original coding 
+/*==========================================================================
+&args in_grid zfactor
+
+/*--------------------
+/* Check of valid args
+/*--------------------
+&if [null %in_grid%] &then
+    &do
+    &type Usage: ISR <in_grid> {z_factor}
+    &return
+    &end
+
+&if ^ [exists %in_grid% -grid] &then
+    &do
+    &type %in_grid% does not exist
+    &end
+
+&if [null %zfactor%] &then
+    &do
+    &type No z_factor given.
+    &type Defaulting to 1.
+    &s zfactor = 1
+    &end
+
+/*------------------------
+/* Set up page and screen
+/*------------------------
+/*disp colormap 216 0
+display 9999 3
+&s xcen = [calc [extract 1 [show pagesize]] / 2]
+&s ycen = [calc [extract 2 [show pagesize]] / 2]
+
+/*-----------------------------------------
+/* Create slope aspect index grid & display
+/*-----------------------------------------
+&type Creating slope & aspect index grid
+sai %in_grid% xx_sai %zfactor%
+
+/*-----------------------------------
+/* Draw up shaded az = 45, .elev = 45
+/*-----------------------------------
+clear
+verify off
+mapext xx_sai
+mapposition cen %xcen% %ycen%
+SAI gt_sailut 45 45
+gridpaint xx_sai # # nowrap gt_sailut
+linesymbol 2
+units page
+circle %xcen% %ycen% %ycen%
+line [calc %xcen% - %ycen%] %ycen% [calc %xcen% + %ycen%] %ycen%
+line %xcen% 0 %xcen% [calc %ycen% * 2]
+units map
+
+/*---------------------------------------------
+/* Draw up shaded with &getpoint to set pnt$key
+/*---------------------------------------------
+units page
+&getpoint
+&s len = [sqrt [calc [calc [abs [calc ( %pnt$x% - %xcen% )]] ** 2] + [calc [abs [calc ( %pnt$y% - %ycen% )]] ** 2]]]
+&s .elev = [calc [calc %ycen% - %len%] * 90 / %ycen%]
+&s x = [calc %pnt$x% - %xcen%]
+&s y = [calc %pnt$y% - %ycen%]
+&r azimuth %x% %y%
+&type Azimuth/Elevation = %.az%/%.elev%
+SAI gt_sailut %.az% %.elev%
+gridpaint xx_sai # # nowrap gt_sailut
+linesymbol 2
+units page
+circle %xcen% %ycen% %ycen%
+line [calc %xcen% - %ycen%] %ycen% [calc %xcen% + %ycen%] %ycen%
+line %xcen% 0 %xcen% [calc %ycen% * 2]
+units map
+
+/*---------------------------------
+/* Loop through letting user explor
+/*---------------------------------
+/* &s flag = 1
+&do &while %pnt$key% <> 9
+    units page
+    &getpoint
+    &if %pnt$key% = 9 &then
+        &goto jump_out
+
+    /*---------------------
+    /* Calculate .elevation
+    /*---------------------
+    &s len = [sqrt [calc [calc [abs [calc ( %pnt$x% - %xcen% )]] ** 2] ~
+             + [calc [abs [calc ( %pnt$y% - %ycen% )]] ** 2]]]
+    &s .elev = [calc [calc %ycen% - %len%] * 90 / %ycen%]
+
+    /*------------------
+    /* Calculate azimuth
+    /*------------------
+    &s x = [calc %pnt$x% - %xcen%]
+    &s y = [calc %pnt$y% - %ycen%]
+    &call find_az
+
+    /*--------
+    /* Display
+    /*--------
+    &type Azimuth/Elevation = %.az%/%.elev%
+    SAI gt_sailut %.az% %.elev%
+/* &if %flag% = 1 &then 
+/*   &do
+    gridpaint xx_sai # # nowrap gt_sailut
+/*    &s flag = 0
+/*   &end
+    linesymbol 2
+    units page
+    circle %xcen% %ycen% %ycen%
+    line [calc %xcen% - %ycen%] %ycen% [calc %xcen% + %ycen%] %ycen%
+    line %xcen% 0 %xcen% [calc %ycen% * 2]
+    units map
+&end
+&label jump_out
+
+&term 9999
+&menu isr.menu &position &lr &screen &lr &strip 'ISR Menu'
+
+/*----------
+/* Clean up
+/*----------
+kill xx_sai all
+kill xxtmp all
+&s fake = [delete gt_sailut -info]
+&s fake = [delete gt_lut -info]
+&return
+
+/*----------
+&routine FIND_AZ
+/*----------
+&s .az = [radang [invangle 0,0,%x%,%y%]]
+&if %.az% <= 90 &then &s .az = 90 - %.az%
+&if %.az% > 90 &then &s .az = 450 - %.az%
+&return

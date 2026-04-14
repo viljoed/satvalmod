@@ -1,0 +1,32 @@
+/*--------------------------------------------------------------------------
+/*                         Geological Survey of Canada.
+/*--------------------------------------------------------------------------
+/*   Program: isr.menu
+/*   Purpose: outputs a shadedrelief with values 0-255 or 1-100
+/*--------------------------------------------------------------------------
+/*     Usage: 
+/* Arguments: 
+/*    Locals:
+/*   Globals: 
+/*--------------------------------------------------------------------------
+/*     Calls: 
+/* Called by: isr.aml
+/*--------------------------------------------------------------------------
+/*     Notes: 
+/*--------------------------------------------------------------------------
+/*   History: David Viljoen - 20/10/94 - original coding 
+/*==========================================================================
+7 isr.menu
+/* 
+ Name of out grid  %input1     %button7               %button8
+%input1 INPUT OUT_GRID 11 TYPEIN YES SCROLL NO ~
+  REQUIRED ~
+  INITIAL 'isr_grid' ~
+  CHARACTER
+%button7 BUTTON KEEP 'Values from 0 to 255' ~
+  %out_grid% = hillshade(%in_grid%, %.az%, %.elev%, shade, %zfactor%)
+%button8 BUTTON KEEP 'Values from 0 to 100' ~
+  xxtmp = hillshade(%in_grid%, %.az%, %.elev%, shade, %zfactor%); ~
+  &describe xxtmp; %out_grid% = int(xxtmp div [calc %grd$zmax% / 100])
+%FORMOPT SETVARIABLES RETURN
+%FORMINIT &thread &focus &off &others
