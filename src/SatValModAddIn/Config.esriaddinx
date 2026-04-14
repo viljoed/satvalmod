@@ -1,0 +1,20 @@
+﻿<ESRI.Configuration xmlns="http://schemas.esri.com/Desktop/AddIns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Name>SatValModAddIn</Name>
+  <AddInID>{d315b9c9-a72b-4172-b240-9ecd1fa7ff83}</AddInID>
+  <Description>Integrates colour and grayscale (e.g. shaded relief) imagery by modulating saturation and value components of the colour imagery with mulitpliers determined by the pixel values in the grayscale imagery.</Description>
+  <Version>1.0</Version>
+  <Image>Images\SatValModAddIn.png</Image>
+  <Author>David Viljoen</Author>
+  <Company>NRCan</Company>
+  <Date>8/30/2012</Date>
+  <Targets>
+    <Target name="Desktop" version="10.5" />
+  </Targets>
+  <AddIn language="CLR" library="SatValModAddIn.dll" namespace="SatValModAddIn">
+    <ArcMap>
+      <Commands>
+        <Button id="NRCan_SatValModAddIn_SVMButton" class="SVMButton" message="Integrates colour and grayscale (e.g. shaded relief) imagery by modulating saturation and value components of the colour imagery with mulitpliers determined by the pixel values in the grayscale imagery" caption="Saturation-Value-Modulaton Image Integration" tip="Saturation-Value-Modulaton Image Integration" category="Add-In Controls" image="Images\SVMButton.png" />
+      </Commands>
+    </ArcMap>
+  </AddIn>
+</ESRI.Configuration>
