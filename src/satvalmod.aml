@@ -1,0 +1,123 @@
+/* File: satvalmod.aml
+/* Author: David Viljoen
+/* Date: July 21, 2000
+/* Usage: SATVALMOD <in_sat_grid> <in_val_grid> <in_shd_grid (1-100)> 
+/*                  <out_sat_grid> <out_val_grid> <cut_off>
+/*                  {sat_exponent} {sat_min} {val_exponent} {val_min} 
+/* Note: <cut_off> should be 100*sin(altitude_used_in_hillshade) 
+/*       or 50th percentile of in_shd_grid
+/*         
+/* Purpose: Creates Shading modulated Saturation and Value components 
+/*          for HSV composite images.  
+/*          
+/* ----------------------------------------------------------------------
+&args in_sat in_val in_shd out_sat out_val cut_off sexp smin vexp vmin
+&severity &error &routine bailout
+
+&if [locase [show program]] <> grid &then
+  &do
+    &ty This AML must be run in Grid.
+    &return &inform
+  &end
+
+&if [null %in_val%] &then 
+  &do
+    &call usage
+  &end
+
+/* Make sure input grids exist
+&do g &list %in_val% %in_sat% %in_shd%
+  &if ^ [exists %g% -grid] &then
+    &do
+      &ty %g% does not exist.
+      &return &inform
+    &end
+&end
+
+/* Bail if output grids exist
+&do g &list %out_val% %out_sat%
+  &if [exists %g% -grid] &then
+    &do
+      &ty %g% exists.
+      &return &inform
+    &end
+&end
+
+/* Set default values 
+&if [quote %cut_off%] = '#' or [null %cut_off%] &then &s cut_off = 70
+&if [quote %vexp%] = '#' or [null %vexp%] &then &s vexp = 1 * 1.0
+&if [quote %vmin%] = '#' or [null %vmin%] &then &s vmin = .1 * 1.0
+&if [quote %sexp%] = '#' or [null %sexp%] &then &s sexp = 1 * 1.0
+&if [quote %smin%] = '#' or [null %smin%] &then &s smin = 0.5 * 1.0
+
+/* Check to make sure that any optional values are not negative
+&do v &list %vexp% %vmin% %sexp% %smin%
+  &if %v% < 0 &then
+    &do
+      &ty %v% must be positive.
+    &end
+&end
+
+&if %cut_off% < 0 OR %cut_off% > 99 &then
+  &do
+    &ty The cut-off shading value must be between 0 and 99.
+    &return &inform
+  &end
+
+
+/* Check domains of value and saturation grids ...
+&do g &list %in_val% %in_sat% %in_shd%
+&describe %g%
+&if %GRD$ZMIN% < 0 OR %GRD$ZMAX% > 100 &then
+  &do
+    &ty %g% has a min, max values of %GRD$ZMIN%, %GRD$ZMAX%.
+    &ty Range must be between 0 and 100
+    &return &inform
+  &end
+&end
+
+/* In earlier version, the cut_off value was set based on the hillshading
+/* altitude (i.e. sin(altitude).  In this version, the recommended cut_off  
+/* is the 50th percentile of the shading grid.  This just happens to be
+/* very close to sin(altitude) for many shading grids.
+
+/* Here is the code ...
+/* &s pi = 3.141569
+/* &s rad = [calc %cut_off% * %pi% / 180]
+/* &s cut_off = [sin %rad%] * 100
+
+&ty Settings are:
+&ty Minimum Value       : %vmin%
+&ty Value exponent      : %vexp%
+&ty Minimum Saturation  : %smin%
+&ty Saturation exponent : %sexp%
+&ty Cut-off break point : %cut_off%
+&if [exists xxsmul -grid] &then kill xxsmul all
+&if [exists xxvmul -grid] &then kill xxvmul all
+
+/* Compute new saturation and value grids.
+&ty Creating new value grid %out_val% ...
+%out_val% = int( CON( %in_shd% <= %cut_off% , %in_val% * ( %vmin% + ( ( 0.99 - %vmin% ) * POW ( %in_shd% / %cut_off% , %vexp% ) ) ), %in_val%) )
+
+&ty Creating new saturation grid %out_sat% ...
+%out_sat% = int( CON( %in_shd% >= %cut_off%, %in_sat% * ( 0.99 - ( 0.99 - %smin% ) * POW( ( %in_shd% - %cut_off% ) / ( 100 - %cut_off% ), %sexp% ) ), %in_sat%) )
+
+&ty All done.
+&return
+
+/*-------------
+&routine USAGE
+/*-------------
+&ty Usage: SATVALMOD <in_sat_grid> <in_val_grid> <in_shd_grid (1-100)> 
+&ty		     <out_sat_grid> <out_val_grid> <cut_off>
+&ty		     {sat_exponent} {sat_min} {val_exponent} {val_min}
+&ty
+&ty Note: <cut_off> should equal 100 * sin(altitude_used_in_hillshade) 
+&ty        or 50th percentile of in_shd_grid
+&return &inform 
+
+/*-------------
+&routine BAILOUT
+/*-------------
+&ty Something has gone wrong.  Report the bug to viljoen@gis.nrcan.gc.ca.
+&return &inform
