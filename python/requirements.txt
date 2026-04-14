@@ -1,0 +1,47 @@
+# requirements.txt
+# colour_shade_fusion project
+#
+# ============================================================
+# SETUP — run these commands in order:
+# ============================================================
+#
+# 1. Create and activate the virtual environment:
+#
+#    uv venv .venv --python 3.12
+#
+#    Windows:
+#      .venv\Scripts\activate
+#    Linux / macOS:
+#      source .venv/bin/activate
+#
+# 2. Install GDAL from a pre-built wheel (no compiler needed):
+#
+#    Windows (Python 3.12, 64-bit):
+#      uv pip install "https://github.com/cgohlke/geospatial-wheels/releases/download/v2024.9.22/GDAL-3.9.2-cp312-cp312-win_amd64.whl"
+#
+#    Linux:
+#      sudo apt install libgdal-dev   # or equivalent for your distro
+#      uv pip install gdal
+#
+#    macOS:
+#      brew install gdal
+#      uv pip install gdal
+#
+# 3. Install the remaining dependencies:
+#
+#    uv pip install -r requirements.txt
+#
+# ============================================================
+# NOTE: GDAL is intentionally excluded from this file because
+# on Windows it must be installed from the pre-built wheel
+# above rather than from PyPI (which would attempt to compile
+# from source and fail without a complex C++ build environment).
+# ============================================================
+
+# Array processing
+# Pinned to <2 for compatibility with GDAL 3.9.x Windows wheels.
+# If using GDAL 3.10+ wheels compiled against NumPy 2.x, relax to >=1.24.
+numpy>=1.24,<2.0
+
+# Image I/O — used by generate_test_images.py for PNG preview export
+Pillow>=10.0
